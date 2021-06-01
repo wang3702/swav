@@ -18,8 +18,8 @@ import torch.nn.parallel
 import torch.backends.cudnn as cudnn
 import torch.distributed as dist
 import torch.optim
-import apex
-from apex.parallel.LARC import LARC
+#import apex
+#from apex.parallel.LARC import LARC
 
 from src.utils import (
     bool_flag,
@@ -33,6 +33,7 @@ from src.multicropdataset import MultiCropDataset
 import src.resnet50 as resnet_models
 from src.imagenet import imagenet
 from src.knn_monitor import knn_monitor
+from src.LARS import SGD_LARC
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 
@@ -185,11 +186,11 @@ def main():
     # synchronize batch norm layers
     if args.sync_bn == "pytorch":
         model = nn.SyncBatchNorm.convert_sync_batchnorm(model)
-    elif args.sync_bn == "apex":
-        process_group = None
-        if args.world_size // 8 > 0:
-            process_group = apex.parallel.create_syncbn_process_group(args.world_size // 8)
-        model = apex.parallel.convert_syncbn_model(model, process_group=process_group)
+    # elif args.sync_bn == "apex":
+    #     process_group = None
+    #     if args.world_size // 8 > 0:
+    #         process_group = apex.parallel.create_syncbn_process_group(args.world_size // 8)
+    #     model = apex.parallel.convert_syncbn_model(model, process_group=process_group)
     # copy model to GPU
     model = model.cuda()
     if args.rank == 0:
@@ -203,7 +204,8 @@ def main():
         momentum=0.9,
         weight_decay=args.wd,
     )
-    optimizer = LARC(optimizer=optimizer, trust_coefficient=0.001, clip=False)
+    #optimizer = LARC(optimizer=optimizer, trust_coefficient=0.001, clip=False)
+    optimizer = SGD_LARC(optimizer, trust_coefficient=0.001, clip=False, eps=1e-8)
     warmup_lr_schedule = np.linspace(args.start_warmup, args.base_lr, len(train_loader) * args.warmup_epochs)
     iters = np.arange(len(train_loader) * (args.epochs - args.warmup_epochs))
     cosine_lr_schedule = np.array([args.final_lr + 0.5 * (args.base_lr - args.final_lr) * (1 + \
@@ -212,9 +214,9 @@ def main():
     logger.info("Building optimizer done.")
 
     # init mixed precision
-    if args.use_fp16:
-        model, optimizer = apex.amp.initialize(model, optimizer, opt_level="O1")
-        logger.info("Initializing mixed precision done.")
+    # if args.use_fp16:
+    #     model, optimizer = apex.amp.initialize(model, optimizer, opt_level="O1")
+    #     logger.info("Initializing mixed precision done.")
 
     # wrap model
     model = nn.parallel.DistributedDataParallel(
@@ -230,7 +232,7 @@ def main():
         run_variables=to_restore,
         state_dict=model,
         optimizer=optimizer,
-        amp=apex.amp,
+        #amp=apex.amp,
     )
     start_epoch = to_restore["epoch"]
 
@@ -284,8 +286,8 @@ def main():
                 "state_dict": model.state_dict(),
                 "optimizer": optimizer.state_dict(),
             }
-            if args.use_fp16:
-                save_dict["amp"] = apex.amp.state_dict()
+            #if args.use_fp16:
+            #    save_dict["amp"] = apex.amp.state_dict()
             torch.save(
                 save_dict,
                 os.path.join(args.dump_path, "checkpoint.pth.tar"),
@@ -360,11 +362,11 @@ def train(train_loader, model, optimizer, epoch, lr_schedule, queue):
 
         # ============ backward and optim step ... ============
         optimizer.zero_grad()
-        if args.use_fp16:
-            with apex.amp.scale_loss(loss, optimizer) as scaled_loss:
-                scaled_loss.backward()
-        else:
-            loss.backward()
+        #if args.use_fp16:
+        #    with apex.amp.scale_loss(loss, optimizer) as scaled_loss:
+        #        scaled_loss.backward()
+        #else:
+        loss.backward()
         # cancel some gradients
         if iteration < args.freeze_prototypes_niters:
             for name, p in model.named_parameters():
