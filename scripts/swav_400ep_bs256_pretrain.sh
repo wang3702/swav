@@ -13,6 +13,7 @@
 #SBATCH --job-name=swav_100ep_bs256_pretrain
 #SBATCH --time=72:00:00
 #SBATCH --mem=150G
+#SBATCH --partition=learnfair
 
 master_node=${SLURM_NODELIST:0:9}${SLURM_NODELIST:9:4}
 dist_url="tcp://"

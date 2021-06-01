@@ -73,6 +73,10 @@ def write_slurm_sh(id,command_line, queue_name="learnfair",nodes=1,
         file.write("bash /private/home/wang3702/.bashrc\n")
         #file.write("/private/home/wang3702/anaconda3/bin/conda init\n")
         file.write("/private/home/wang3702/anaconda3/bin/conda activate base\n")
+        file.write("master_node=${SLURM_NODELIST:0:9}${SLURM_NODELIST:9:4}\n")
+        file.write('dist_url="tcp://"\n')
+        file.write("dist_url+=$master_node\n")
+        file.write("dist_url+=:40000\n")
         file.write(command_line+"\n")
         file.write("wait $!\n")
         file.write("set +x \n")
@@ -95,6 +99,6 @@ command_line = "python -u main_swav.py --data_path imagenet --nmb_crops 2 6 --si
                 "--temperature 0.1  --epsilon 0.05  --sinkhorn_iterations 3  --feat_dim 128  " \
                "--nmb_prototypes 3000 --queue_length 3840  --epoch_queue_starts 15  --epochs 100 --batch_size 32 " \
                "--base_lr 0.6 --final_lr 0.0006 --freeze_prototypes_niters 5005  --wd 0.000001 --warmup_epochs 0  " \
-               "--dist_url tcp://localhost:10051 --arch resnet50 --use_fp16 true  --sync_bn pytorch --dump_path %s " \
+               "--dist_url $dist_url --arch resnet50 --use_fp16 true  --sync_bn pytorch --dump_path %s " \
                ""%dump_path
 write_slurm_sh("swav_baseline_100", command_line, queue_name)
