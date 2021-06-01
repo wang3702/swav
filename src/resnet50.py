@@ -274,7 +274,7 @@ class ResNet(nn.Module):
 
         return nn.Sequential(*layers)
 
-    def forward_backbone(self, x):
+    def forward_backbone(self, x,eval_mode=0):
         x = self.padding(x)
 
         x = self.conv1(x)
@@ -286,7 +286,7 @@ class ResNet(nn.Module):
         x = self.layer3(x)
         x = self.layer4(x)
 
-        if self.eval_mode:
+        if eval_mode:
             return x
 
         x = self.avgpool(x)

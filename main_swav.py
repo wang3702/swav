@@ -31,6 +31,10 @@ from src.utils import (
 )
 from src.multicropdataset import MultiCropDataset
 import src.resnet50 as resnet_models
+from src.imagenet import imagenet
+from src.knn_monitor import knn_monitor
+import torchvision.transforms as transforms
+import torchvision.datasets as datasets
 
 logger = getLogger()
 
@@ -77,6 +81,8 @@ parser.add_argument("--epochs", default=100, type=int,
                     help="number of total epochs to run")
 parser.add_argument("--batch_size", default=64, type=int,
                     help="batch size per gpu, i.e. how many unique instances per gpu")
+parser.add_argument("--knn_batch_size", default=32, type=int,
+                    help="batch size per gpu for knn monitor")
 parser.add_argument("--base_lr", default=4.8, type=float, help="base learning rate")
 parser.add_argument("--final_lr", type=float, default=0, help="final learning rate")
 parser.add_argument("--freeze_prototypes_niters", default=313, type=int,
@@ -115,7 +121,8 @@ parser.add_argument("--sync_bn", type=str, default="pytorch", help="synchronize 
 parser.add_argument("--dump_path", type=str, default=".",
                     help="experiment dump path for checkpoints and log")
 parser.add_argument("--seed", type=int, default=31, help="seed")
-
+parser.add_argument("--knn_freq",type=int,default=1, help="report current accuracy under specific iterations")
+parser.add_argument("--knn_neighbor",type=int,default=20,help="nearest neighbor used to decide the labels")
 
 def main():
     global args
@@ -141,6 +148,31 @@ def main():
         pin_memory=True,
         drop_last=True
     )
+    #configure dataset for knn checking
+    traindir = os.path.join(args.data, 'train')
+    normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                     std=[0.229, 0.224, 0.225])
+    testdir = os.path.join(args.data, 'val')
+    transform_test = transforms.Compose([
+        transforms.Resize(256),
+        transforms.CenterCrop(224),
+        transforms.ToTensor(),
+        normalize,
+    ])
+    # val_dataset = datasets.ImageFolder(traindir,transform_test)
+    val_dataset = imagenet(traindir, 0.2, transform_test)
+    test_dataset = datasets.ImageFolder(testdir, transform_test)
+    val_sampler = torch.utils.data.distributed.DistributedSampler(val_dataset)
+    test_sampler = torch.utils.data.distributed.DistributedSampler(test_dataset)
+
+    val_loader = torch.utils.data.DataLoader(
+        val_dataset, batch_size=args.knn_batch_size, shuffle=False,
+        num_workers=args.workers, pin_memory=True, sampler=val_sampler, drop_last=False)
+    test_loader = torch.utils.data.DataLoader(
+        test_dataset, batch_size=args.knn_batch_size, shuffle=False,
+        num_workers=args.workers, pin_memory=True, sampler=test_sampler, drop_last=False)
+
+
     logger.info("Building data done with {} images loaded.".format(len(train_dataset)))
 
     # build model
@@ -231,7 +263,20 @@ def main():
         # train the network
         scores, queue = train(train_loader, model, optimizer, epoch, lr_schedule, queue)
         training_stats.update(scores)
-
+        if epoch%args.knn_freq==0:
+            print("gpu consuming before cleaning:", torch.cuda.memory_allocated()/1024/1024)
+            torch.cuda.empty_cache()
+            print("gpu consuming after cleaning:", torch.cuda.memory_allocated()/1024/1024)
+            #try:
+            #should also work using a much smaller knn batch size with sampler
+            knn_test_acc=knn_monitor(model, val_loader, test_loader,
+                        global_k=min(args.knn_neighbor,len(val_loader.dataset)))
+            #except:
+            #    torch.cuda.empty_cache()
+            #knn_test_acc = knn_monitor_fast(model.module.encoder_q, val_loader, test_loader,
+            #                               global_k=min(args.knn_neighbor, len(val_loader.dataset)))
+            print({'*KNN monitor Accuracy': knn_test_acc})
+            torch.cuda.empty_cache()
         # save checkpoints
         if args.rank == 0:
             save_dict = {
