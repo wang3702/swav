@@ -7,10 +7,10 @@
 
 #!/bin/bash
 #SBATCH --nodes=1
-#SBATCH --gpus=4
-#SBATCH --ntasks-per-node=4
+#SBATCH --gpus=8
+#SBATCH --ntasks-per-node=8
 #SBATCH --cpus-per-task=4
-#SBATCH --job-name=swav_400ep_bs256_pretrain
+#SBATCH --job-name=swav_100ep_bs256_pretrain
 #SBATCH --time=72:00:00
 #SBATCH --mem=150G
 
@@ -19,8 +19,8 @@ dist_url="tcp://"
 dist_url+=$master_node
 dist_url+=:40000
 
-DATASET_PATH="/path/to/imagenet"
-EXPERIMENT_PATH="./experiments/swav_400ep_bs256_pretrain"
+DATASET_PATH="imagenet"
+EXPERIMENT_PATH="./swav_400ep_bs256_pretrain"
 mkdir -p $EXPERIMENT_PATH
 
 srun --output=${EXPERIMENT_PATH}/%j.out --error=${EXPERIMENT_PATH}/%j.err --label python -u main_swav.py \
@@ -37,8 +37,8 @@ srun --output=${EXPERIMENT_PATH}/%j.out --error=${EXPERIMENT_PATH}/%j.err --labe
 --nmb_prototypes 3000 \
 --queue_length 3840 \
 --epoch_queue_starts 15 \
---epochs 400 \
---batch_size 64 \
+--epochs 100 \
+--batch_size 32 \
 --base_lr 0.6 \
 --final_lr 0.0006 \
 --freeze_prototypes_niters 5005 \
