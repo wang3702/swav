@@ -34,7 +34,7 @@ def write_slurm_sh(id,command_line, queue_name="learnfair",nodes=1,
     today = datetime.date.today()
     formatted_today = today.strftime('%y%m%d')
     now = time.strftime("%H:%M:%S")
-    dependency_handler_path = os.path.join(os.getcwd(),"ops")
+    dependency_handler_path = os.path.join(os.getcwd(),"src")
     dependency_handler_path = os.path.join(dependency_handler_path,"handler.txt")
     run_path = os.path.join(os.getcwd(),"log")
     mkdir(run_path)
