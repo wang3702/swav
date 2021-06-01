@@ -94,5 +94,5 @@ command_line = "python -m torch.distributed.launch --nproc_per_node=8 main_swav.
                 "--temperature 0.1  --epsilon 0.05  --sinkhorn_iterations 3  --feat_dim 128  " \
                "--nmb_prototypes 3000 --queue_length 3840  --epoch_queue_starts 15  --epochs 100 --batch_size 32 " \
                "--base_lr 0.6 --final_lr 0.0006 --freeze_prototypes_niters 5005  --wd 0.000001 --warmup_epochs 0  " \
-               "--dist_url=tcp://localhost:10031 --arch resnet50 --use_fp16 true  --sync_bn pytorch --dump_path %s"%dump_path
+               "--dist_url tcp://localhost:10051 --arch resnet50 --use_fp16 true  --sync_bn pytorch --dump_path %s"%dump_path
 write_slurm_sh("swav_baseline_100", command_line, queue_name)
