@@ -150,10 +150,10 @@ def main():
         drop_last=True
     )
     #configure dataset for knn checking
-    traindir = os.path.join(args.data, 'train')
+    traindir = os.path.join(args.data_path, 'train')
     normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                      std=[0.229, 0.224, 0.225])
-    testdir = os.path.join(args.data, 'val')
+    testdir = os.path.join(args.data_path, 'val')
     transform_test = transforms.Compose([
         transforms.Resize(256),
         transforms.CenterCrop(224),
