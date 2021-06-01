@@ -96,5 +96,5 @@ command_line = "python -u main_swav.py --data_path imagenet --nmb_crops 2 6 --si
                "--nmb_prototypes 3000 --queue_length 3840  --epoch_queue_starts 15  --epochs 100 --batch_size 32 " \
                "--base_lr 0.6 --final_lr 0.0006 --freeze_prototypes_niters 5005  --wd 0.000001 --warmup_epochs 0  " \
                "--dist_url tcp://localhost:10051 --arch resnet50 --use_fp16 true  --sync_bn pytorch --dump_path %s " \
-               "--is_slurm_job 1 "%dump_path
+               ""%dump_path
 write_slurm_sh("swav_baseline_100", command_line, queue_name)
