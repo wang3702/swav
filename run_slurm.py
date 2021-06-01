@@ -94,7 +94,7 @@ formatted_today = today.strftime('%y%m%d')
 now = time.strftime("%H:%M:%S")
 dump_path = os.path.join(dump_path, formatted_today + now)
 mkdir(dump_path)
-command_line = "python -u main_swav.py --data_path imagenet --nmb_crops 2 6 --size_crops 224 96 " \
+command_line = "srun python -u main_swav.py --data_path imagenet --nmb_crops 2 6 --size_crops 224 96 " \
                "--min_scale_crops 0.14 0.05 --max_scale_crops 1. 0.14 --crops_for_assign 0 1 "\
                 "--temperature 0.1  --epsilon 0.05  --sinkhorn_iterations 3  --feat_dim 128  " \
                "--nmb_prototypes 3000 --queue_length 3840  --epoch_queue_starts 15  --epochs 100 --batch_size 32 " \

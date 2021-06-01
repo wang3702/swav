@@ -9,11 +9,15 @@
 #SBATCH --nodes=1
 #SBATCH --gpus=8
 #SBATCH --ntasks-per-node=8
-#SBATCH --cpus-per-task=4
+#SBATCH --cpus-per-task=8
 #SBATCH --job-name=swav_100ep_bs256_pretrain
 #SBATCH --time=72:00:00
 #SBATCH --mem=150G
 #SBATCH --partition=learnfair
+#SBATCH --mail-user=wang3702@fb.com
+#SBATCH --mail-type=FAIL
+#SBATCH --mail-type=end
+#SBATCH --constraint="volta"
 
 master_node=${SLURM_NODELIST:0:9}${SLURM_NODELIST:9:4}
 dist_url="tcp://"
