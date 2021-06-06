@@ -30,7 +30,7 @@ from src.utils import (
     AverageMeter,
     init_distributed_mode,
 )
-import src.resnet50 as resnet_models
+import src.resnet50new as resnet_models
 
 logger = getLogger()
 
