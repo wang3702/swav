@@ -311,8 +311,8 @@ def train(model, reglog, optimizer, loader, epoch):
         # update stats
         acc1, acc5 = accuracy(output, target, topk=(1, 5))
         losses.update(loss.item(), inp.size(0))
-        top1.update(acc1[0], inp.size(0))
-        top5.update(acc5[0], inp.size(0))
+        top1.update(acc1.item(), inp.size(0))
+        top5.update(acc5.item(), inp.size(0))
 
         batch_time.update(time.perf_counter() - end)
         end = time.perf_counter()
@@ -367,15 +367,15 @@ def validate_network(val_loader, model, linear_classifier):
 
             acc1, acc5 = accuracy(output, target, topk=(1, 5))
             losses.update(loss.item(), inp.size(0))
-            top1.update(acc1[0], inp.size(0))
-            top5.update(acc5[0], inp.size(0))
+            top1.update(acc1.item(), inp.size(0))
+            top5.update(acc5.item(), inp.size(0))
 
             # measure elapsed time
             batch_time.update(time.perf_counter() - end)
             end = time.perf_counter()
 
-    if top1.avg.item() > best_acc:
-        best_acc = top1.avg.item()
+    if top1.avg > best_acc:
+        best_acc = top1.avg
 
     if args.rank == 0:
         logger.info(
@@ -386,7 +386,7 @@ def validate_network(val_loader, model, linear_classifier):
             "Best Acc@1 so far {acc:.1f}".format(
                 batch_time=batch_time, loss=losses, top1=top1, acc=best_acc))
 
-    return losses.avg, top1.avg.item(), top5.avg.item()
+    return losses.avg, top1.avg, top5.avg
 
 
 def accuracy_prev(output, target, topk=(1,)):
