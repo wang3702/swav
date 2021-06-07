@@ -89,6 +89,9 @@ parser.add_argument("--rank", default=0, type=int, help="""rank of this process:
 parser.add_argument("--local_rank", default=0, type=int,
                     help="this argument is not used and should be ignored")
 
+#load moco encoder_q type model
+parser.add_argument("--moco_model",default=0,type=int,help="pretrained model is swav fashion or moco fashion")
+
 
 def main():
     global args, best_acc
@@ -156,7 +159,10 @@ def main():
         if "state_dict" in state_dict:
             state_dict = state_dict["state_dict"]
         # remove prefixe "module."
-        state_dict = {k.replace("module.", ""): v for k, v in state_dict.items()}
+        if args.moco_model:
+            state_dict = {k.replace("module.encoder_q.", ""): v for k, v in state_dict.items()}
+        else:
+            state_dict = {k.replace("module.", ""): v for k, v in state_dict.items()}
         for k, v in model.state_dict().items():
             if k not in list(state_dict):
                 logger.info('key "{}" could not be found in provided state dict'.format(k))
