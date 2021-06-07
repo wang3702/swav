@@ -337,7 +337,7 @@ def train(model, reglog, optimizer, loader, epoch):
                 )
             )
 
-    return epoch, losses.avg, top1.avg.item(), top5.avg.item()
+    return epoch, losses.avg, top1.avg, top5.avg
 
 
 def validate_network(val_loader, model, linear_classifier):
