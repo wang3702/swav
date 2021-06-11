@@ -61,6 +61,25 @@ class MultiCropDataset(datasets.ImageFolder):
             return index, multi_crops
         return multi_crops
 
+class CropDataset(datasets.ImageFolder):
+    def __init__(
+        self,
+        data_path,
+        transform,
+        return_index=False,
+    ):
+        super(CropDataset, self).__init__(data_path)
+        self.return_index = return_index
+        self.trans = transform
+
+    def __getitem__(self, index):
+        path, _ = self.samples[index]
+        image = self.loader(path)
+        multi_crops = list(map(lambda trans: trans(image), self.trans))
+        if self.return_index:
+            return index, multi_crops
+        return multi_crops
+
 
 class RandomGaussianBlur(object):
     def __call__(self, img):

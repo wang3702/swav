@@ -145,6 +145,7 @@ def main():
         )
     else:
         from src.inside_crop import inside_crop, TwoCropsTransform
+        from src.multicropdataset import CropDataset
         traindir = os.path.join(args.data_path, 'train')
         normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                          std=[0.229, 0.224, 0.225])
@@ -152,7 +153,7 @@ def main():
                                     args.nmb_crops,
                                     args.min_scale_crops,
                                     args.max_scale_crops, normalize)
-        train_dataset = datasets.ImageFolder(traindir, cur_transform)
+        train_dataset = CropDataset(traindir, cur_transform)
     sampler = torch.utils.data.distributed.DistributedSampler(train_dataset)
     train_loader = torch.utils.data.DataLoader(
         train_dataset,
