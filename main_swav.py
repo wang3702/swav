@@ -124,6 +124,7 @@ parser.add_argument("--dump_path", type=str, default=".",
 parser.add_argument("--seed", type=int, default=31, help="seed")
 parser.add_argument("--knn_freq",type=int,default=1, help="report current accuracy under specific iterations")
 parser.add_argument("--knn_neighbor",type=int,default=20,help="nearest neighbor used to decide the labels")
+parser.add_argument("--type",type=int,default=0, help="running type, default:0 (swav input), 1: (inside input)")
 
 def main():
     global args
@@ -133,13 +134,25 @@ def main():
     logger, training_stats = initialize_exp(args, "epoch", "loss")
 
     # build data
-    train_dataset = MultiCropDataset(
-        args.data_path,
+    if args.type==0:
+        traindir = os.path.join(args.data_path, 'train')
+        train_dataset = MultiCropDataset(
+        traindir,
         args.size_crops,
         args.nmb_crops,
         args.min_scale_crops,
         args.max_scale_crops,
-    )
+        )
+    else:
+        from src.inside_crop import inside_crop, TwoCropsTransform
+        traindir = os.path.join(args.data_path, 'train')
+        normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                         std=[0.229, 0.224, 0.225])
+        cur_transform = inside_crop(args.size_crops,
+                                    args.nmb_crops,
+                                    args.min_scale_crops,
+                                    args.max_scale_crops, normalize)
+        train_dataset = datasets.ImageFolder(traindir, cur_transform)
     sampler = torch.utils.data.distributed.DistributedSampler(train_dataset)
     train_loader = torch.utils.data.DataLoader(
         train_dataset,
