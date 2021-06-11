@@ -75,7 +75,7 @@ class CropDataset(datasets.ImageFolder):
     def __getitem__(self, index):
         path, _ = self.samples[index]
         image = self.loader(path)
-        multi_crops = list(map(lambda trans: trans(image), self.trans))
+        multi_crops = self.trans(image)
         if self.return_index:
             return index, multi_crops
         return multi_crops
