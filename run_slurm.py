@@ -19,6 +19,7 @@ def mkdir(path):
     else:
         print (path+' existed')
         return False
+
 def write_slurm_sh(id,command_line, queue_name="learnfair",nodes=1,
                    gpu_per_node=8,wall_time=3*24*60,username="wang3702",CPU_PER_GPU=10):
     """
